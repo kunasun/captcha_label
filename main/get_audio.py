@@ -27,27 +27,6 @@ def process_original_csv(csv_file, path_to_json):
     with open(path_to_json, 'w') as f:
         json.dump(data, f, indent=4)
     
-
-# def get_random_audio_from_csv(csv_file, unique_descriptors_threshold=4):
-#     '''
-#     Takes in a .csv file csv_file
-#     Returns a .mp3 file, audio_id, and True/False if any descriptors exist
-#     '''
-#     logging.info("Getting random audio...")
-#     df = pd.read_csv(csv_file, sep=',', quotechar='"', skipinitialspace=True, encoding='utf-8')
-#     num_rows = len(df)
-#     rand_row_n = np.random.randint(0, num_rows)
-    
-#     audio_url = df['url'][rand_row_n]
-#     audio_id = df['epidemic_id'][rand_row_n]
-#     audio_descriptors = df['descriptors'][rand_row_n]
-
-#     has_enough_descriptors = not np.isnan(audio_descriptors) and len(audio_descriptors) >= unique_descriptors_threshold
-#     logging.info("Got audio with: url=%s and id=%s and has_enough_descriptors=%s", audio_url, audio_id, has_enough_descriptors)
-#     logging.info("Finished getting random audio.")
-
-#     return audio_url, audio_id, has_enough_descriptors
-    
 def get_rand_audio_from_json(json_file, unique_descriptors_threshold=4):
     logging.info("Getting random audio...")
     with open(json_file, 'r') as f:
@@ -70,67 +49,85 @@ def get_rand_audio_from_json(json_file, unique_descriptors_threshold=4):
 
     return audio_url, audio_id, has_enough_descriptors
 
-#how do we know which row to update? use audio_id
-def add_description(description: str, audio_id: int):
-    '''
-    Add a given description to the given audio_id or increment its count
-    Increment total descriptors_count
-    '''
-    logging.info("Adding description %s to audio_id=%d", description, audio_id)
-    df = pd.read_csv(PATH_TO_NEW_CSV, sep=',', quotechar='"', skipinitialspace=True, encoding='utf-8')
-    print(df.head)
-    row_number = df.index[df['epidemic_id'] == audio_id].values[0]
-    print(df.iloc[row_number])
-    if pd.isnull(df.iloc[row_number]['descriptors']):
-        # df.loc[row_number, 'descriptors'] = [{description: 1}]
-        print(df.iloc[row_number]['descriptors'])
-        df.loc[row_number, 'descriptors'] = [{description: 1}]
-    else:
-        print("ELSE", df['descriptors'][row_number])
-        print(df['descriptors'][row_number])
-        dic = json.loads(df['descriptors'][row_number])
-        dic[description] += 1
-        df.loc[row_number, 'descriptors'] = [dic]
-    df.loc[row_number, 'total_descriptors'] += 1
-    print(df.iloc[row_number])
-    print("ROW", df['descriptors'][row_number])
-    logging.info("Finished adding description %s to audio_id=%d. Count is %d", description, audio_id, df['descriptors'][row_number][description])
-    df.to_csv(PATH_TO_NEW_CSV, index=False)
+def add_description(description: str, audio_id: int, json_file=PATH_TO_JSON):
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+        row = data[audio_id]
+        row['descriptors'][description] = dict.get(row['descriptors'], description, 0) + 1
+        # if len(row['descriptors']) == 0:
+
+    with open(json_file, 'w') as f:
+        json.dump(data, f, indent=4)    
+
+def validate_description(description: str, audio_id: int, threshold: int=3, json_file=PATH_TO_JSON):
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+        row = data[audio_id]
+        if len(row['descriptors']) == 1:
+            add_description(description, audio_id)
+            return
+        valid_lst = np.array([i for i in row['descriptors'].keys() if row['descriptors'][i] > threshold])
+        invalid_lst = np.array([i for i in row['descriptors'].keys() if row['descriptors'][i] <= threshold])
+        logging.info("Valid list: %s", valid_lst)
+        logging.info("Invalid list: %s", invalid_lst)
+
+        if len(valid_lst) == 0 or len(invalid_lst) < 3:
+            add_description(description, audio_id)
+            return
+
+        invalid_choices = np.random.choice(invalid_lst, size=3, replace=False)
+        valid_choice = np.random.choice(valid_lst, size=1, replace=False)
+        multiple_choice = np.concatenate((valid_choice, invalid_choices))
+        np.random.shuffle(multiple_choice)
+        logging.info("Multiple Choice Selections: %s", multiple_choice)
+        return multiple_choice 
+
 
 #preprocess the data such that no caps, spaces, etc (dictionary counts are accurate)
-def validate_description(description: str, audio_id: int, threshold: int=3):
-    df = pd.read_csv(PATH_TO_NEW_CSV, sep=',', quotechar='"', skipinitialspace=True, encoding='utf-8', on_bad_lines='skip')
-    row_numbers = df.index[df['epidemic_id'] == audio_id].values[0]
-    description_lst = df['descriptors'][row_numbers]
+# def validate_description(description: str, audio_id: int, threshold: int=3):
+#     df = pd.read_csv(PATH_TO_NEW_CSV, sep=',', quotechar='"', skipinitialspace=True, encoding='utf-8', on_bad_lines='skip')
+#     row_numbers = df.index[df['epidemic_id'] == audio_id].values[0]
+#     description_lst = df['descriptors'][row_numbers]
     
-    if len(description_lst) == 1:
-        add_description(description, audio_id)
+#     if len(description_lst) == 1:
+#         add_description(description, audio_id)
 
-    valid_lst = {k: v for k, v in description_lst.items() if int(k) > threshold}
-    invalid_lst = {k: v for k, v in description_lst.items() if int(k) <= threshold}
+#     valid_lst = {k: v for k, v in description_lst.items() if int(k) > threshold}
+#     invalid_lst = {k: v for k, v in description_lst.items() if int(k) <= threshold}
     
-    rand_description_correct = np.random.randint(0, len(valid_lst))
-    rand_description_incorrects = np.random.randint(0, len(invalid_lst),min(3, len(invalid_lst)))
+#     rand_description_correct = np.random.randint(0, len(valid_lst))
+#     rand_description_incorrects = np.random.randint(0, len(invalid_lst),min(3, len(invalid_lst)))
 
-    multiple_choice = [rand_description_correct]
-    multiple_choice.extend(rand_description_incorrects)
-    return multiple_choice 
+#     multiple_choice = [rand_description_correct]
+#     multiple_choice.extend(rand_description_incorrects)
+#     return multiple_choice 
     
     
 
 def get_CAPTCHA():
-    return get_random_audio_from_csv(PATH_TO_NEW_CSV)
+    # return get_random_audio_from_csv(PATH_TO_NEW_CSV)
+    return get_rand_audio_from_json(PATH_TO_JSON)
 
 def main():
     process_original_csv(PATH_TO_CSV, PATH_TO_JSON)
     get_rand_audio_from_json(PATH_TO_JSON)
-    # get_random_audio_from_csv(PATH_TO_NEW_CSV)
-    # add_description("swag", 130947)
-    # add_description("swag", 130947)
-    # add_description("swag", 130947)
-    # add_description("bru", 130947)
-    # add_description("stuff", 130947)
-    # add_description("things", 130947)
+    add_description("swag", 1)
+    add_description("swag", 1)
+    add_description("swag", 1)
+    add_description("bru", 1)
+    add_description("stuff", 1)
+    add_description("things", 1)
+    validate_description("swag", 1)
+    validate_description("swag", 1)
+    add_description("a", 1)
+    add_description("b", 1)
+    add_description("c", 1)
+    add_description("d", 1)
+    add_description("bru", 1)
+    add_description("bru", 1)
+    add_description("bru", 1)
+    validate_description("swag", 1)
+
 
     pass
 

@@ -18,8 +18,8 @@ def validate_CAPTCHA():
     track_id = request.json['track_id']
     description = request.json['description']
 
-    validate_description(description, track_id)
-    return {}, 200
+    multiple_choice = validate_description(description, track_id)
+    return multiple_choice, 200
 
 @api.route('/generateCAPTCHA', methods=['POST'])
 #Randomly select new captcha

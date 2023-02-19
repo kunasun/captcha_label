@@ -1,0 +1,1 @@
+flask --app flask_server run --host=0.0.0.0
