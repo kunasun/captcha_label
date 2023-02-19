@@ -1,2 +1,3 @@
 main/debug.log
-main/__pycache__
+__pycache__/get_audio.cpython-39.pyc
+data/audio_data.json
