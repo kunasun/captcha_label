@@ -1,5 +1,6 @@
 from flask import Flask, request
 from get_audio import add_description, validate_description, get_CAPTCHA
+import json
 
 api = Flask(__name__)
 
@@ -36,6 +37,7 @@ def generate_CAPTCHA():
         'multiple_choice': multipleChoice,
         'correctAnswer': correctAnswer,
         }
+    data = json.dumps(data)
     return data, 200
 
 @api.route('/')
