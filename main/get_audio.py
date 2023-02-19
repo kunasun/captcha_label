@@ -60,6 +60,7 @@ def add_description(description: str, audio_id: int, json_file=PATH_TO_JSON):
         json.dump(data, f, indent=4)    
 
 def validate_description(description: str, audio_id: int, threshold: int=3, json_file=PATH_TO_JSON):
+    #TODO: Merge this into the generate call
     with open(json_file, 'r') as f:
         data = json.load(f)
         row = data[audio_id]
@@ -80,7 +81,9 @@ def validate_description(description: str, audio_id: int, threshold: int=3, json
         multiple_choice = np.concatenate((valid_choice, invalid_choices))
         np.random.shuffle(multiple_choice)
         logging.info("Multiple Choice Selections: %s", multiple_choice)
-        return multiple_choice 
+        is_correct = description == valid_choice.item()
+        logging.info("Got is_correct: %s", is_correct)
+        return multiple_choice, is_correct
 
 
 #preprocess the data such that no caps, spaces, etc (dictionary counts are accurate)
