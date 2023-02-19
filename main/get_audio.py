@@ -153,7 +153,7 @@ def validate_description(description: str, audio_id: int, threshold: int=3, json
 
 def get_CAPTCHA():
     # return get_random_audio_from_csv(PATH_TO_NEW_CSV)
-    return get_audio_from_json(PATH_TO_JSON)
+    return get_audio_from_json(PATH_TO_JSON, id=2)
 
 def main():
     process_original_csv(PATH_TO_CSV, PATH_TO_JSON)
