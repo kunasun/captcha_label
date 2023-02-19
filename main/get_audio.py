@@ -34,7 +34,7 @@ def get_audio_from_json(json_file, unique_descriptors_threshold:int=4, threshold
     If id is provided, the function is not random
     '''
     logging.info("Getting random audio...")
-    multiple_choice, valid_choice = [], None
+    multiple_choice, valid_choice = [], ""
     with open(json_file, 'r') as f:
         data = json.load(f)
         # print(dict[:5])
@@ -72,6 +72,7 @@ def get_audio_from_json(json_file, unique_descriptors_threshold:int=4, threshold
                 multiple_choice = np.concatenate((valid_choice, invalid_choices))
                 np.random.shuffle(multiple_choice)
                 multiple_choice = multiple_choice.tolist()
+                valid_choice = str(valid_choice.item())
                 logging.info("Multiple Choice Selections: %s", multiple_choice)
                 logging.info("Correct answer: %s", valid_choice)
         
