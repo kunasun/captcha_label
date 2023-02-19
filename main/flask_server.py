@@ -8,9 +8,13 @@ api = Flask(__name__)
 def new_CAPTCHA():
     track_id = request.json['track_id']
     description = request.json['description']
+    correct_answer = request.json['correct_answer']
 
-    add_description(description, track_id)
-    return {}, 200
+    success = add_description(description, track_id, correct_answer=correct_answer)
+    if success:
+        return {}, 200
+    else:
+        return {}, 400
 
 @api.route('/validateCAPTCHA', methods=['POST'])
 #Input ID of the track used for this captcha, already-labeled
@@ -24,8 +28,14 @@ def validate_CAPTCHA():
 @api.route('/generateCAPTCHA', methods=['POST'])
 #Randomly select new captcha
 def generate_CAPTCHA():
-    url, id, isNew = get_CAPTCHA()
-    data = {'url': url, 'id': id,'isNew': isNew}
+    url, id, isMultipleChoice, multipleChoice, correctAnswer = get_CAPTCHA()
+    data = {
+        'url': url, 
+        'id': id,
+        'isMultipleChoice': isMultipleChoice,
+        'multiple_choice': multipleChoice,
+        'correctAnswer': correctAnswer,
+        }
     return data, 200
 
 @api.route('/')
