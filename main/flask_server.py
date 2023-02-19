@@ -27,3 +27,10 @@ def generate_CAPTCHA():
     url, id, isNew = get_CAPTCHA()
     data = {'url': url, 'id': id,'isNew': isNew}
     return data, 200
+
+@api.route('/')
+def swag():
+    return "<h1 style='color:blue'>Wassup</h1>"
+
+if __name__ == "__main__":
+    api.run(host='0.0.0.0', debug=True, port=5000)
